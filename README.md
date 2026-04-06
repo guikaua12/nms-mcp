@@ -143,43 +143,307 @@ Under the configured cache root, the server creates data like:
 - `bundles/`: downloaded bundle jars when `NMS_MCP_BUNDLE_COORDINATE` is set.
 - `snippets/`: server jars, remapped classes, and decompilation inputs for snippet generation.
 
-## Example Lookups
+## Example Tool Calls
 
-Resolve a known class:
+The examples below show the tool argument object you pass to the MCP server and the response object you get back from that tool. They are trimmed for brevity, but the field names and value shapes come from a live `nms-mappings` server.
+
+### `resolve_symbol`
+
+Resolve a known Mojang-mapped class name in a specific version:
 
 ```json
 {
   "name": "MinecraftServer",
   "version": "1.21.5",
   "kind": "class",
-  "namespace": "mojang"
+  "namespace": "mojang",
+  "limit": 5
 }
 ```
 
-That resolves to the grounded symbol id:
+Representative response:
 
-```text
-1.21.5|class|net/minecraft/server/MinecraftServer
+```json
+{
+  "exact": true,
+  "ambiguous": false,
+  "results": [
+    {
+      "score": 1000,
+      "reason": "exact alias match",
+      "matchedNamespace": "mojang",
+      "matchedValue": "net.minecraft.server.MinecraftServer",
+      "symbol": {
+        "symbolId": "1.21.5|class|net/minecraft/server/MinecraftServer",
+        "versionId": "1.21.5",
+        "kind": "class",
+        "canonicalName": "MinecraftServer",
+        "canonicalQualifiedName": "net.minecraft.server.MinecraftServer",
+        "sourceInternalName": "net/minecraft/server/MinecraftServer",
+        "availableNamespaces": [
+          "hashed",
+          "intermediary",
+          "mojang",
+          "quilt",
+          "searge",
+          "source",
+          "spigot",
+          "yarn"
+        ],
+        "aliases": {
+          "mojang": {
+            "qualifiedName": "net.minecraft.server.MinecraftServer"
+          },
+          "intermediary": {
+            "qualifiedName": "net.minecraft.server.MinecraftServer"
+          }
+        }
+      }
+    }
+  ]
+}
 ```
 
-Search for a field by owner and meaning:
+### `search_symbols`
+
+Search by meaning instead of exact name. This is useful when you know the owner and intent but not the obfuscated source name:
 
 ```json
 {
   "query": "ServerPlayer connection",
   "version": "1.21.5",
   "kind": "field",
-  "namespace": "mojang"
+  "namespace": "mojang",
+  "limit": 5
 }
 ```
 
-Describe or decompile a previously returned symbol:
+Representative response:
 
 ```json
 {
-  "symbol_id": "1.21.5|class|net/minecraft/server/MinecraftServer"
+  "queriedVersion": "1.21.5",
+  "actualVersion": "1.21.5",
+  "results": [
+    {
+      "score": 140,
+      "reason": "matched all query terms",
+      "matchedNamespace": "mojang",
+      "matchedValue": "net.minecraft.server.level.ServerPlayer#connection",
+      "symbol": {
+        "symbolId": "1.21.5|field|asc|f|Late;",
+        "kind": "field",
+        "canonicalName": "connection",
+        "canonicalQualifiedName": "net.minecraft.server.level.ServerPlayer#connection",
+        "sourceName": "f",
+        "sourceDescriptor": "Late;",
+        "aliases": {
+          "mojang": {
+            "name": "connection",
+            "ownerBinaryName": "net.minecraft.server.level.ServerPlayer",
+            "descriptor": "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;"
+          },
+          "yarn": {
+            "name": "networkHandler",
+            "ownerBinaryName": "net.minecraft.server.network.ServerPlayerEntity"
+          }
+        }
+      }
+    }
+  ]
 }
 ```
+
+### `describe_symbol`
+
+Once a search or resolve step returns a `symbolId`, you can fetch the full grounded record directly:
+
+```json
+{
+  "symbol_id": "1.21.5|field|asc|f|Late;"
+}
+```
+
+Representative response:
+
+```json
+{
+  "symbolId": "1.21.5|field|asc|f|Late;",
+  "versionId": "1.21.5",
+  "kind": "field",
+  "canonicalName": "connection",
+  "canonicalQualifiedName": "net.minecraft.server.level.ServerPlayer#connection",
+  "canonicalBinaryName": "net.minecraft.server.level.ServerPlayer",
+  "packageName": "net.minecraft.server.level",
+  "sourceInternalName": "asc",
+  "sourceName": "f",
+  "sourceDescriptor": "Late;",
+  "availableNamespaces": [
+    "hashed",
+    "intermediary",
+    "mojang",
+    "quilt",
+    "searge",
+    "source",
+    "yarn"
+  ],
+  "aliases": {
+    "mojang": {
+      "name": "connection",
+      "qualifiedName": "net.minecraft.server.level.ServerPlayer#connection",
+      "descriptor": "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;"
+    },
+    "intermediary": {
+      "name": "field_13987",
+      "qualifiedName": "net.minecraft.class_3222#field_13987"
+    }
+  }
+}
+```
+
+### `compare_symbol_versions`
+
+Use the symbol id from one version and ask the server to line it up against another version:
+
+```json
+{
+  "from_version": "1.20.4",
+  "to_version": "1.21.5",
+  "namespace": "mojang",
+  "symbol_id_or_name": "1.20.4|field|ane|c|Laoc;"
+}
+```
+
+Representative response:
+
+```json
+{
+  "relationship": "equivalent",
+  "from": {
+    "symbolId": "1.20.4|field|ane|c|Laoc;",
+    "canonicalQualifiedName": "net.minecraft.server.level.ServerPlayer#connection",
+    "sourceName": "c",
+    "sourceDescriptor": "Laoc;"
+  },
+  "to": {
+    "symbolId": "1.21.5|field|asc|f|Late;",
+    "canonicalQualifiedName": "net.minecraft.server.level.ServerPlayer#connection",
+    "sourceName": "f",
+    "sourceDescriptor": "Late;"
+  },
+  "notes": []
+}
+```
+
+This example shows the common case where the Mojang-facing symbol stayed equivalent, but the source owner/name/descriptor changed across versions.
+
+### `get_symbol_snippet`
+
+Snippet requests return a short decompiled excerpt in Mojang names for the containing class:
+
+```json
+{
+  "symbol_id": "1.21.5|field|asc|f|Late;",
+  "lines_before": 2,
+  "lines_after": 4
+}
+```
+
+Representative response:
+
+```json
+{
+  "symbolId": "1.21.5|field|asc|f|Late;",
+  "version": "1.21.5",
+  "namespace": "mojang",
+  "classBinaryName": "net.minecraft.server.level.ServerPlayer",
+  "startLine": 432,
+  "endLine": 438,
+  "excerpt": "    private static final boolean DEFAULT_SEEN_CREDITS = false;\n    private static final boolean DEFAULT_SPAWN_EXTRA_PARTICLES_ON_FALL = false;\n    public ServerGamePacketListenerImpl connection;\n    public final MinecraftServer server;\n    public final ServerPlayerGameMode gameMode;\n    private final PlayerAdvancements advancements;\n    private final ServerStatsCounter stats;"
+}
+```
+
+## Example Resources
+
+The server also exposes read-only resources and templates. Resource reads return Markdown that wraps the underlying JSON payload.
+
+Read the available versions and local cache state:
+
+```text
+nms://versions
+```
+
+Representative response body:
+
+````markdown
+# NMS Versions
+
+```json
+[
+  {
+    "version": "26.1.1",
+    "releaseTime": "2026-04-01T09:06:36Z",
+    "isLatestRelease": true,
+    "indexed": false
+  },
+  {
+    "version": "1.21.5",
+    "releaseTime": "2025-03-25T12:14:58Z",
+    "isLatestRelease": false,
+    "indexed": true
+  }
+]
+```
+````
+
+Read a grounded class record by version and binary name:
+
+```text
+nms://1.21.5/class/net.minecraft.server.MinecraftServer
+```
+
+Representative response body:
+
+````markdown
+# net.minecraft.server.MinecraftServer
+
+```json
+{
+  "symbolId": "1.21.5|class|net/minecraft/server/MinecraftServer",
+  "kind": "class",
+  "canonicalQualifiedName": "net.minecraft.server.MinecraftServer",
+  "sourceInternalName": "net/minecraft/server/MinecraftServer"
+}
+```
+````
+
+Read a grounded member record by owner, kind, and signature key:
+
+```text
+nms://1.21.5/member/net.minecraft.server.level.ServerPlayer/field/Y29ubmVjdGlvbnxMbmV0L21pbmVjcmFmdC9zZXJ2ZXIvbmV0d29yay9TZXJ2ZXJHYW1lUGFja2V0TGlzdGVuZXJJbXBsOw
+```
+
+That `signatureKey` is the base64url-encoded form of:
+
+```text
+connection|Lnet/minecraft/server/network/ServerGamePacketListenerImpl;
+```
+
+Representative response body:
+
+````markdown
+# net.minecraft.server.level.ServerPlayer#connection
+
+```json
+{
+  "symbolId": "1.21.5|field|asc|f|Late;",
+  "kind": "field",
+  "canonicalQualifiedName": "net.minecraft.server.level.ServerPlayer#connection",
+  "sourceName": "f",
+  "sourceDescriptor": "Late;"
+}
+```
+````
 
 ## Development
 
