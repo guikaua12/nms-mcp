@@ -4,6 +4,8 @@
 
 The goal is simple: let an agent resolve real `net.minecraft.*` classes, fields, and methods without guessing. Only server-side symbols are indexed; `net.minecraft.client.*` is filtered out.
 
+This project would not be possible in its current form without [Takenaka](https://github.com/zlataovce/takenaka). `nms-mcp` depends on Takenaka's mapping reconciliation work, and the core indexing flow here is built on top of that upstream library.
+
 ## What It Exposes
 
 ### Tools
@@ -158,3 +160,19 @@ Current tests cover:
 
 - search ranking behavior
 - runtime classpath compatibility for Takenaka and snippet support
+
+## License and Credits
+
+`nms-mcp` is licensed under the Apache License 2.0. Copyright 2026 Guilherme Kaua da Silva. Direct dependency attributions live in `THIRD_PARTY_NOTICES.md`, and the license texts they rely on are included in `THIRD_PARTY_LICENSES/`. The Gradle `distZip` archive includes these files.
+
+Main acknowledgement:
+
+- [Takenaka](https://github.com/zlataovce/takenaka) made this project possible. It does the heavy lifting for reconciling versioned Minecraft mappings, and `nms-mcp` is built around that capability.
+
+Other direct dependencies currently credited there include:
+
+- [Java MCP SDK](https://github.com/modelcontextprotocol/java-sdk) for MCP server, transport, and schema primitives.
+- [Fabric mapping-io](https://github.com/FabricMC/mapping-io), [Fabric tiny-remapper](https://github.com/FabricMC/tiny-remapper), and [CFR](https://www.benf.org/other/cfr/) for mapping access, remapping, and snippet decompilation.
+- [Jackson Kotlin module](https://github.com/FasterXML/jackson-module-kotlin), [SQLite JDBC](https://github.com/xerial/sqlite-jdbc), [SLF4J](https://www.slf4j.org/), [Kotlin](https://kotlinlang.org/), [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines), and [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) for runtime, persistence, logging, and serialization support.
+
+`tiny-remapper` is the only current direct dependency under LGPL-3.0. See `THIRD_PARTY_NOTICES.md` before changing the packaging format for releases.

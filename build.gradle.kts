@@ -1,3 +1,5 @@
+import org.gradle.jvm.tasks.Jar
+
 plugins {
     kotlin("jvm") version "2.1.21"
     application
@@ -12,6 +14,20 @@ kotlin {
 
 application {
     mainClass.set("dev.guilherme.nmsmcp.MainKt")
+}
+
+// Ship project and third-party licensing information with the jar and app distribution.
+distributions {
+    main {
+        contents {
+            from("LICENSE")
+            from("README.md")
+            from("THIRD_PARTY_NOTICES.md")
+            from("THIRD_PARTY_LICENSES") {
+                into("THIRD_PARTY_LICENSES")
+            }
+        }
+    }
 }
 
 configurations.all {
@@ -37,4 +53,14 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.named<Jar>("jar") {
+    metaInf {
+        from("LICENSE")
+        from("THIRD_PARTY_NOTICES.md")
+        from("THIRD_PARTY_LICENSES") {
+            into("THIRD_PARTY_LICENSES")
+        }
+    }
 }
