@@ -34,54 +34,79 @@ This project would not be possible in its current form without [Takenaka](https:
 
 ## Requirements
 
-- JDK 21
+- Java 21
 - Network access on first use to fetch the Mojang version manifest, mapping inputs, and server jars for snippet generation
 
-## Running
+## Install
 
-Run the server directly during development:
+Public installs are built around GitHub Releases rather than local source builds.
 
-```bash
-./gradlew run
-```
+1. Download a release artifact from the repository's GitHub Releases page.
+2. Pick one of the supported launch paths:
+   - Extracted application distribution:
+     - `nms-mcp-<version>.zip`
+     - `nms-mcp-<version>.tar.gz`
+   - Shaded executable jar:
+     - `nms-mcp-<version>-all.jar`
+3. If you downloaded a distribution archive, extract it to a stable location and keep the extracted `bin/` and `lib/` directories together.
+4. Paste the MCP client config for your platform.
+5. Restart the MCP client so it can launch the server.
 
-On Windows:
+`SHA256SUMS.txt` is published alongside each release. The thin `nms-mcp-<version>.jar` remains a normal build output for internal use and is not the supported `java -jar` entrypoint.
 
-```powershell
-.\gradlew.bat run
-```
-
-To build a distributable archive:
-
-```bash
-./gradlew distZip
-```
-
-That produces `build/distributions/nms-mcp-<version>.zip`, which contains `bin/nms-mcp` and `bin/nms-mcp.bat` launchers suitable for MCP client configuration.
+You normally do not start `nms-mcp` manually. The MCP client launches it for you when needed.
 
 ## MCP Client Setup
 
-This project is a stdio MCP server. After building a distribution, point your client at the generated launcher.
+### Windows Launcher
 
-Example on Windows:
+Point the client at the extracted batch launcher, not the extracted folder root.
 
 ```json
 {
   "mcpServers": {
     "nms_mappings": {
-      "command": "C:\\path\\to\\nms-mcp\\nms-mcp.bat"
+      "command": "C:\\path\\to\\nms-mcp-<version>\\bin\\nms-mcp.bat"
     }
   }
 }
 ```
 
-Example on macOS/Linux:
+### Linux Launcher
 
 ```json
 {
   "mcpServers": {
     "nms_mappings": {
-      "command": "/path/to/nms-mcp/bin/nms-mcp"
+      "command": "/path/to/nms-mcp-<version>/bin/nms-mcp"
+    }
+  }
+}
+```
+
+### macOS Launcher
+
+```json
+{
+  "mcpServers": {
+    "nms_mappings": {
+      "command": "/Applications/nms-mcp-<version>/bin/nms-mcp"
+    }
+  }
+}
+```
+
+### Cross-Platform `java -jar`
+
+```json
+{
+  "mcpServers": {
+    "nms_mappings": {
+      "command": "java",
+      "args": [
+        "-jar",
+        "/path/to/nms-mcp-<version>-all.jar"
+      ]
     }
   }
 }
@@ -93,16 +118,25 @@ The server is configured entirely through environment variables.
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `NMS_MCP_CACHE_DIR` | `cache` | Cache root for the version manifest, SQLite index, snippet artifacts, and mapping workspace. |
+| `NMS_MCP_CACHE_DIR` | OS-native cache directory | Cache root for the version manifest, SQLite index, snippet artifacts, and mapping workspace. This override has the highest precedence. |
 | `NMS_MCP_BUNDLE_COORDINATE` | unset | Optional Maven coordinate for a prebuilt Takenaka bundle in the form `group:artifact:version`. |
 | `NMS_MCP_DEFAULT_VERSION` | latest release | Default Minecraft version when a request omits `version`. |
 | `NMS_MCP_PRIMARY_NAMESPACE` | `mojang` | Preferred canonical namespace. Supported values: `source`, `mojang`, `spigot`, `searge`, `intermediary`, `yarn`, `quilt`, `hashed`. |
 | `NMS_MCP_ENABLE_SNIPPETS` | `true` | Enables `get_symbol_snippet`. Accepts `1`, `true`, or `yes` for enabled. |
 | `NMS_MCP_MAX_SEARCH_RESULTS` | `10` | Default search/resolve result limit, clamped to `1..50`. |
 
+## Default Cache Location
+
+If `NMS_MCP_CACHE_DIR` is unset, `nms-mcp` defaults to the platform cache location below:
+
+- Windows: `${LOCALAPPDATA}\nms-mcp\cache`
+- macOS: `${HOME}/Library/Caches/nms-mcp`
+- Linux: `${XDG_CACHE_HOME:-$HOME/.cache}/nms-mcp`
+- Fallback: relative `cache` when the required OS-specific location cannot be resolved
+
 ## Cache Layout
 
-Under the default `cache/` directory, the server creates data like:
+Under the configured cache root, the server creates data like:
 
 - `version_manifest_v2.json`: Mojang version manifest cache.
 - `index.sqlite`: persisted symbol index for versions already built.
@@ -150,20 +184,41 @@ Describe or decompile a previously returned symbol:
 
 ## Development
 
-Run tests with:
+For local development, you can still run the server directly:
 
 ```bash
-./gradlew test
+./gradlew run
 ```
+
+On Windows:
+
+```powershell
+.\gradlew.bat run
+```
+
+Build and verify the public release artifacts with:
+
+```bash
+./gradlew test shadowJar distZip distTar verifyReleaseArtifacts
+```
+
+Generate release checksums locally with:
+
+```bash
+./gradlew generateReleaseChecksums
+```
+
+Tag releases as `v<project.version>` to trigger the GitHub Release workflow. For example, version `0.1.0` is released from tag `v0.1.0`.
 
 Current tests cover:
 
+- cache directory resolution across supported operating systems
 - search ranking behavior
 - runtime classpath compatibility for Takenaka and snippet support
 
 ## License and Credits
 
-`nms-mcp` is licensed under the Apache License 2.0. Copyright 2026 Guilherme Kaua da Silva. Direct dependency attributions live in `THIRD_PARTY_NOTICES.md`, and the license texts they rely on are included in `THIRD_PARTY_LICENSES/`. The Gradle `distZip` archive includes these files.
+`nms-mcp` is licensed under the Apache License 2.0. Copyright 2026 Guilherme Kaua da Silva. Direct dependency attributions live in `THIRD_PARTY_NOTICES.md`, and the license texts they rely on are included in `THIRD_PARTY_LICENSES/`. The Gradle distribution archives include these files.
 
 Main acknowledgement:
 

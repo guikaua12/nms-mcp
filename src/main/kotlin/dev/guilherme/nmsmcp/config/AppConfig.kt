@@ -13,19 +13,23 @@ data class AppConfig(
     val maxSearchResults: Int
 ) {
     companion object {
-        fun fromEnvironment(): AppConfig {
-            val cacheDir = Path(System.getenv("NMS_MCP_CACHE_DIR") ?: "cache")
-            val bundleCoordinate = System.getenv("NMS_MCP_BUNDLE_COORDINATE")?.trim()?.ifBlank { null }
-            val defaultVersion = System.getenv("NMS_MCP_DEFAULT_VERSION")?.trim()?.ifBlank { null }
+        fun fromEnvironment(
+            environment: Map<String, String> = System.getenv(),
+            osName: String = System.getProperty("os.name").orEmpty(),
+            userHome: String? = System.getProperty("user.home")
+        ): AppConfig {
+            val cacheDir = resolveCacheDir(environment, osName, userHome)
+            val bundleCoordinate = environment["NMS_MCP_BUNDLE_COORDINATE"]?.trim()?.ifBlank { null }
+            val defaultVersion = environment["NMS_MCP_DEFAULT_VERSION"]?.trim()?.ifBlank { null }
             val primaryNamespace = MappingNamespace.fromWireName(
-                System.getenv("NMS_MCP_PRIMARY_NAMESPACE")?.trim().orEmpty()
+                environment["NMS_MCP_PRIMARY_NAMESPACE"]?.trim().orEmpty()
             ) ?: MappingNamespace.MOJANG
-            val snippetsEnabled = System.getenv("NMS_MCP_ENABLE_SNIPPETS")
+            val snippetsEnabled = environment["NMS_MCP_ENABLE_SNIPPETS"]
                 ?.trim()
                 ?.lowercase()
                 ?.let { it == "1" || it == "true" || it == "yes" }
                 ?: true
-            val maxSearchResults = System.getenv("NMS_MCP_MAX_SEARCH_RESULTS")
+            val maxSearchResults = environment["NMS_MCP_MAX_SEARCH_RESULTS"]
                 ?.trim()
                 ?.toIntOrNull()
                 ?.coerceIn(1, 50)
@@ -39,6 +43,35 @@ data class AppConfig(
                 snippetsEnabled = snippetsEnabled,
                 maxSearchResults = maxSearchResults
             )
+        }
+
+        private fun resolveCacheDir(
+            environment: Map<String, String>,
+            osName: String,
+            userHome: String?
+        ): Path {
+            environment["NMS_MCP_CACHE_DIR"]?.let { return Path(it) }
+
+            val normalizedOsName = osName.lowercase()
+            val homeDir = environment["HOME"]?.trim()?.ifBlank { null }
+                ?: userHome?.trim()?.ifBlank { null }
+
+            return when {
+                normalizedOsName.contains("win") -> environment["LOCALAPPDATA"]
+                    ?.trim()
+                    ?.ifBlank { null }
+                    ?.let { Path(it, "nms-mcp", "cache") }
+                normalizedOsName.contains("mac") || normalizedOsName.contains("darwin") -> homeDir
+                    ?.let { Path(it, "Library", "Caches", "nms-mcp") }
+                normalizedOsName.contains("linux") || normalizedOsName.contains("nix") || normalizedOsName.contains("nux") -> {
+                    environment["XDG_CACHE_HOME"]
+                        ?.trim()
+                        ?.ifBlank { null }
+                        ?.let { Path(it, "nms-mcp") }
+                        ?: homeDir?.let { Path(it, ".cache", "nms-mcp") }
+                }
+                else -> null
+            } ?: Path("cache")
         }
     }
 }

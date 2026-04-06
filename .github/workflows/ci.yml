@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Run tests and package release artifacts
+        shell: bash
+        run: ./gradlew --no-daemon test shadowJar distZip distTar verifyReleaseArtifacts
+
+      - name: Resolve project version
+        id: version
+        shell: bash
+        run: echo "value=$(./gradlew -q printVersion)" >> "$GITHUB_OUTPUT"
+
+      - name: Assert release files exist
+        shell: bash
+        run: |
+          version="${{ steps.version.outputs.value }}"
+          test -f "build/libs/nms-mcp-${version}-all.jar"
+          test -f "build/distributions/nms-mcp-${version}.zip"
+          test -f "build/distributions/nms-mcp-${version}.tar.gz"
+
+      - name: Upload packaged artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-artifacts-${{ matrix.os }}
+          if-no-files-found: error
+          path: |
+            build/libs/nms-mcp-${{ steps.version.outputs.value }}-all.jar
+            build/distributions/nms-mcp-${{ steps.version.outputs.value }}.zip
+            build/distributions/nms-mcp-${{ steps.version.outputs.value }}.tar.gz
