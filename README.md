@@ -1,6 +1,6 @@
 # nms-mcp
 
-`nms-mcp` is a stdio Model Context Protocol (MCP) server for grounded Minecraft server-side NMS lookups across versions. It builds versioned symbol indexes from Takenaka mapping data, persists them to SQLite, and can optionally return short decompiled snippets remapped to Mojang names.
+`nms-mcp` is a stdio Model Context Protocol (MCP) server for grounded Minecraft server-side NMS lookups across versions. It builds versioned symbol indexes from [Takenaka](https://github.com/zlataovce/takenaka) mapping data, persists them to SQLite, and can optionally return short decompiled snippets remapped to Mojang names.
 
 The goal is simple: let an agent resolve real `net.minecraft.*` classes, fields, and methods without guessing. Only server-side symbols are indexed; `net.minecraft.client.*` is filtered out.
 
@@ -27,7 +27,7 @@ This project would not be possible in its current form without [Takenaka](https:
 ## How It Works
 
 1. On startup, the server loads the Mojang version manifest into the local cache.
-2. The first request for a version resolves mapping data through Takenaka, optionally trying a prebuilt mapping bundle first.
+2. The first request for a version resolves mapping data through [Takenaka](https://github.com/zlataovce/takenaka), optionally trying a prebuilt mapping bundle first.
 3. The mapping tree is converted into a per-version symbol index with aliases for supported namespaces such as `mojang`, `spigot`, `intermediary`, `yarn`, and `quilt`.
 4. Indexed symbols are stored in SQLite so later lookups do not need to rebuild the same version.
 5. Snippet requests download the matching server jar, remap the target class to Mojang names with Tiny Remapper, and decompile it with CFR.
