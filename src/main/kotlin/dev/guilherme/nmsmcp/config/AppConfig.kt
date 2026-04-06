@@ -9,8 +9,7 @@ data class AppConfig(
     val bundleCoordinate: String?,
     val defaultVersion: String?,
     val primaryNamespace: MappingNamespace,
-    val snippetsEnabled: Boolean,
-    val maxSearchResults: Int
+    val snippetsEnabled: Boolean
 ) {
     companion object {
         fun fromEnvironment(
@@ -29,19 +28,13 @@ data class AppConfig(
                 ?.lowercase()
                 ?.let { it == "1" || it == "true" || it == "yes" }
                 ?: true
-            val maxSearchResults = environment["NMS_MCP_MAX_SEARCH_RESULTS"]
-                ?.trim()
-                ?.toIntOrNull()
-                ?.coerceIn(1, 50)
-                ?: 10
 
             return AppConfig(
                 cacheDir = cacheDir,
                 bundleCoordinate = bundleCoordinate,
                 defaultVersion = defaultVersion,
                 primaryNamespace = primaryNamespace,
-                snippetsEnabled = snippetsEnabled,
-                maxSearchResults = maxSearchResults
+                snippetsEnabled = snippetsEnabled
             )
         }
 

@@ -23,7 +23,6 @@ import me.kcra.takenaka.core.mapping.ancestry.impl.fieldAncestryTreeOf
 import me.kcra.takenaka.core.mapping.ancestry.impl.methodAncestryTreeOf
 import net.fabricmc.mappingio.tree.MappingTree
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.max
 
 class SymbolService(
     private val config: AppConfig,
@@ -94,7 +93,12 @@ class SymbolService(
             .values
             .map { group -> group.maxByOrNull(SearchHit::score)!! }
             .sortedWith(compareByDescending<SearchHit> { it.score }.thenBy { it.symbol.canonicalQualifiedName ?: it.symbol.canonicalName })
-            .take(query.limit.coerceIn(1, max(1, config.maxSearchResults)))
+            .let { dedupedHits ->
+                query.limit
+                    ?.coerceAtLeast(1)
+                    ?.let(dedupedHits::take)
+                    ?: dedupedHits
+            }
     }
 
     suspend fun resolve(
@@ -102,7 +106,9 @@ class SymbolService(
         versionId: String?,
         kind: SymbolKind?,
         namespace: MappingNamespace?,
-        owner: String?
+        owner: String?,
+        limit: Int?,
+        allowFallback: Boolean = true
     ): ResolveResult {
         val version = resolveVersion(versionId)
         val versionIndex = ensureIndexed(version)
@@ -152,6 +158,14 @@ class SymbolService(
             )
         }
 
+        if (!allowFallback) {
+            return ResolveResult(
+                exact = false,
+                ambiguous = false,
+                hits = emptyList()
+            )
+        }
+
         return ResolveResult(
             exact = false,
             ambiguous = false,
@@ -163,7 +177,7 @@ class SymbolService(
                     namespace = namespace,
                     owner = owner,
                     packagePrefix = null,
-                    limit = config.maxSearchResults
+                    limit = limit
                 )
             )
         )
@@ -193,7 +207,7 @@ class SymbolService(
         val fromSymbol = if (symbolIdOrName.contains('|')) {
             describe(symbolIdOrName)
         } else {
-            val resolved = resolve(symbolIdOrName, fromVersion.id, null, namespace, null)
+            val resolved = resolve(symbolIdOrName, fromVersion.id, null, namespace, null, null)
             require(resolved.hits.isNotEmpty()) { "Could not resolve '$symbolIdOrName' in $fromVersionId" }
             require(!resolved.ambiguous) { "Lookup for '$symbolIdOrName' in $fromVersionId is ambiguous" }
             resolved.hits.first().symbol

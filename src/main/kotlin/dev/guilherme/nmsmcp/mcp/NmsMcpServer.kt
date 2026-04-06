@@ -57,7 +57,7 @@ class NmsMcpServer(
                                 "namespace" to enumSchema("Preferred mapping namespace.", MappingNamespace.supportedWireNames()),
                                 "owner" to stringSchema("Optional owner binary name."),
                                 "package_prefix" to stringSchema("Optional package prefix filter."),
-                                "limit" to integerSchema("Max results to return.")
+                                "limit" to integerSchema("Max results to return. When omitted, all matches are returned.")
                             )
                         )
                     )
@@ -71,7 +71,7 @@ class NmsMcpServer(
                 val namespace = MappingNamespace.fromWireName(args["namespace"]?.toString())
                 val owner = args["owner"]?.toString()
                 val packagePrefix = args["package_prefix"]?.toString()
-                val limit = (args["limit"] as? Number)?.toInt() ?: config.maxSearchResults
+                val limit = (args["limit"] as? Number)?.toInt()
 
                 val hits = runBlocking {
                     service.search(
@@ -115,7 +115,12 @@ class NmsMcpServer(
                                 "version" to stringSchema("Minecraft version."),
                                 "kind" to enumSchema("Symbol kind.", listOf("class", "method", "field")),
                                 "namespace" to enumSchema("Preferred mapping namespace.", MappingNamespace.supportedWireNames()),
-                                "owner" to stringSchema("Optional owner binary name.")
+                                "owner" to stringSchema("Optional owner binary name."),
+                                "limit" to integerSchema(
+                                    description = "Max fallback results to return when no exact match exists. Required to return fallback candidates and capped at $MAX_FALLBACK_RESULT_LIMIT.",
+                                    minimum = MIN_RESULT_LIMIT,
+                                    maximum = MAX_FALLBACK_RESULT_LIMIT
+                                )
                             )
                         )
                     )
@@ -123,13 +128,42 @@ class NmsMcpServer(
             )
             .callHandler { _, request ->
                 val args = request.arguments()
+                val fallbackLimit = try {
+                    parseExplicitResultLimit(args["limit"], MAX_FALLBACK_RESULT_LIMIT)
+                } catch (error: IllegalArgumentException) {
+                    return@callHandler toolResult(
+                        text = error.message ?: "Invalid limit.",
+                        structuredContent = linkedMapOf(
+                            "exact" to false,
+                            "ambiguous" to false,
+                            "results" to emptyList<Map<String, Any?>>()
+                        ),
+                        isError = true
+                    )
+                }
                 val result = runBlocking {
                     service.resolve(
                         name = args["name"]?.toString().orEmpty(),
                         versionId = args["version"]?.toString(),
                         kind = SymbolKind.fromWireName(args["kind"]?.toString()),
                         namespace = MappingNamespace.fromWireName(args["namespace"]?.toString()),
-                        owner = args["owner"]?.toString()
+                        owner = args["owner"]?.toString(),
+                        limit = fallbackLimit,
+                        allowFallback = fallbackLimit != null
+                    )
+                }
+
+                if (!result.exact && fallbackLimit == null) {
+                    val name = args["name"]?.toString().orEmpty()
+                    return@callHandler toolResult(
+                        text = "No exact match for '$name'. Provide `limit` ($MIN_RESULT_LIMIT-$MAX_FALLBACK_RESULT_LIMIT) to return fallback candidates.",
+                        structuredContent = linkedMapOf(
+                            "exact" to false,
+                            "ambiguous" to false,
+                            "limitRequiredForFallback" to true,
+                            "results" to emptyList<Map<String, Any?>>()
+                        ),
+                        isError = true
                     )
                 }
 
@@ -299,7 +333,8 @@ class NmsMcpServer(
                     versionId = version,
                     kind = SymbolKind.CLASS,
                     namespace = null,
-                    owner = null
+                    owner = null,
+                    limit = null
                 )
             }
             require(resolved.hits.isNotEmpty()) { "No class matched $binaryName in $version" }
@@ -334,7 +369,8 @@ class NmsMcpServer(
                     versionId = version,
                     kind = kind,
                     namespace = null,
-                    owner = ownerBinaryName
+                    owner = ownerBinaryName,
+                    limit = null
                 )
             }
             require(resolved.hits.isNotEmpty()) { "No member matched $ownerBinaryName#$name in $version" }
@@ -502,8 +538,20 @@ class NmsMcpServer(
     private fun stringSchema(description: String): Map<String, Any> =
         linkedMapOf("type" to "string", "description" to description)
 
-    private fun integerSchema(description: String): Map<String, Any> =
-        linkedMapOf("type" to "integer", "description" to description)
+    private fun integerSchema(
+        description: String,
+        default: Int? = null,
+        minimum: Int? = null,
+        maximum: Int? = null
+    ): Map<String, Any> =
+        linkedMapOf<String, Any>(
+            "type" to "integer",
+            "description" to description
+        ).apply {
+            default?.let { put("default", it) }
+            minimum?.let { put("minimum", it) }
+            maximum?.let { put("maximum", it) }
+        }
 
     private fun enumSchema(description: String, values: List<String>): Map<String, Any> =
         linkedMapOf("type" to "string", "description" to description, "enum" to values)
@@ -514,6 +562,29 @@ class NmsMcpServer(
         val kind: SymbolKind,
         val signatureKey: String
     )
+
+    private companion object {
+        const val MAX_FALLBACK_RESULT_LIMIT = 100
+    }
 }
 
 private fun String.trim(char: Char): String = trim { it == char }
+
+internal const val MIN_RESULT_LIMIT = 1
+
+internal fun parseExplicitResultLimit(
+    rawValue: Any?,
+    maximum: Int
+): Int? {
+    if (rawValue == null) {
+        return null
+    }
+
+    val parsed = when (rawValue) {
+        is Number -> rawValue.toInt()
+        is String -> rawValue.toIntOrNull()
+        else -> null
+    } ?: throw IllegalArgumentException("limit must be an integer between $MIN_RESULT_LIMIT and $maximum")
+
+    return parsed.coerceIn(MIN_RESULT_LIMIT, maximum)
+}

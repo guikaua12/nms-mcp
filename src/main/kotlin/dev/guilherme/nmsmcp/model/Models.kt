@@ -90,7 +90,7 @@ data class SearchQuery(
     val namespace: MappingNamespace?,
     val owner: String?,
     val packagePrefix: String?,
-    val limit: Int
+    val limit: Int?
 )
 
 data class ResolveResult(

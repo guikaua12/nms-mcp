@@ -123,7 +123,6 @@ The server is configured entirely through environment variables.
 | `NMS_MCP_DEFAULT_VERSION` | latest release | Default Minecraft version when a request omits `version`. |
 | `NMS_MCP_PRIMARY_NAMESPACE` | `mojang` | Preferred canonical namespace. Supported values: `source`, `mojang`, `spigot`, `searge`, `intermediary`, `yarn`, `quilt`, `hashed`. |
 | `NMS_MCP_ENABLE_SNIPPETS` | `true` | Enables `get_symbol_snippet`. Accepts `1`, `true`, or `yes` for enabled. |
-| `NMS_MCP_MAX_SEARCH_RESULTS` | `10` | Default search/resolve result limit, clamped to `1..50`. |
 
 ## Default Cache Location
 

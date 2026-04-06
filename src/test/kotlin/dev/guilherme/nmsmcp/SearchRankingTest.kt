@@ -29,8 +29,7 @@ class SearchRankingTest {
             bundleCoordinate = null,
             defaultVersion = "1.21.11",
             primaryNamespace = MappingNamespace.MOJANG,
-            snippetsEnabled = false,
-            maxSearchResults = 10
+            snippetsEnabled = false
         )
         val objectMapper = defaultObjectMapper()
         val sqliteIndex = SqliteSymbolIndex(cacheDir.resolve("index.sqlite"), objectMapper)
