@@ -29,7 +29,7 @@ class NmsMcpServer(
         val transportProvider = StdioServerTransportProvider(jsonMapper)
 
         McpServer.sync(transportProvider)
-            .serverInfo("nms-mappings-mcp", "0.1.0")
+            .serverInfo("nms-mappings-mcp", "0.2.0")
             .instructions(
                 "Use this server to resolve grounded Minecraft server-side NMS symbols. " +
                     "Prefer resolve_symbol before assuming a class, field, or method exists."
