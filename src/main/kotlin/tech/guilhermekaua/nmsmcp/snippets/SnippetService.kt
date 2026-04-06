@@ -1,10 +1,10 @@
-package dev.guilherme.nmsmcp.snippets
+package tech.guilhermekaua.nmsmcp.snippets
 
-import dev.guilherme.nmsmcp.config.AppConfig
-import dev.guilherme.nmsmcp.model.IndexedSymbol
-import dev.guilherme.nmsmcp.model.MappingNamespace
-import dev.guilherme.nmsmcp.model.SnippetResult
-import dev.guilherme.nmsmcp.model.SymbolKind
+import tech.guilhermekaua.nmsmcp.config.AppConfig
+import tech.guilhermekaua.nmsmcp.model.IndexedSymbol
+import tech.guilhermekaua.nmsmcp.model.MappingNamespace
+import tech.guilhermekaua.nmsmcp.model.SnippetResult
+import tech.guilhermekaua.nmsmcp.model.SymbolKind
 import me.kcra.takenaka.core.Version
 import me.kcra.takenaka.core.versionAttributesOf
 import net.fabricmc.mappingio.tree.MappingTree

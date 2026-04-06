@@ -13,7 +13,7 @@ plugins {
     id("com.gradleup.shadow") version "8.3.10"
 }
 
-group = "dev.guilherme.nmsmcp"
+group = "tech.guilhermekaua.nmsmcp"
 version = "0.1.0"
 
 kotlin {
@@ -21,7 +21,7 @@ kotlin {
 }
 
 application {
-    mainClass.set("dev.guilherme.nmsmcp.MainKt")
+    mainClass.set("tech.guilhermekaua.nmsmcp.MainKt")
 }
 
 // Ship project and third-party licensing information with the jar and app distribution.

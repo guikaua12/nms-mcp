@@ -1,9 +1,9 @@
-package dev.guilherme.nmsmcp.index
+package tech.guilhermekaua.nmsmcp.index
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import dev.guilherme.nmsmcp.model.IndexedSymbol
-import dev.guilherme.nmsmcp.model.VersionIndex
+import tech.guilhermekaua.nmsmcp.model.IndexedSymbol
+import tech.guilhermekaua.nmsmcp.model.VersionIndex
 import java.nio.file.Path
 import java.sql.Connection
 import java.sql.DriverManager
@@ -55,7 +55,7 @@ class SqliteSymbolIndex(
         }
     }
 
-    fun loadVersion(versionId: String): VersionIndex? {
+    fun loadVersion(versionId: String): tech.guilhermekaua.nmsmcp.model.VersionIndex? {
         connection().use { connection ->
             connection.prepareStatement(
                 """

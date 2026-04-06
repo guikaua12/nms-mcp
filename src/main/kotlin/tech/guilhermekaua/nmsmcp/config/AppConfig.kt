@@ -1,6 +1,6 @@
-package dev.guilherme.nmsmcp.config
+package tech.guilhermekaua.nmsmcp.config
 
-import dev.guilherme.nmsmcp.model.MappingNamespace
+import tech.guilhermekaua.nmsmcp.model.MappingNamespace
 import java.nio.file.Path
 import kotlin.io.path.Path
 
@@ -8,7 +8,7 @@ data class AppConfig(
     val cacheDir: Path,
     val bundleCoordinate: String?,
     val defaultVersion: String?,
-    val primaryNamespace: MappingNamespace,
+    val primaryNamespace: tech.guilhermekaua.nmsmcp.model.MappingNamespace,
     val snippetsEnabled: Boolean
 ) {
     companion object {
@@ -20,9 +20,9 @@ data class AppConfig(
             val cacheDir = resolveCacheDir(environment, osName, userHome)
             val bundleCoordinate = environment["NMS_MCP_BUNDLE_COORDINATE"]?.trim()?.ifBlank { null }
             val defaultVersion = environment["NMS_MCP_DEFAULT_VERSION"]?.trim()?.ifBlank { null }
-            val primaryNamespace = MappingNamespace.fromWireName(
+            val primaryNamespace = _root_ide_package_.tech.guilhermekaua.nmsmcp.model.MappingNamespace.fromWireName(
                 environment["NMS_MCP_PRIMARY_NAMESPACE"]?.trim().orEmpty()
-            ) ?: MappingNamespace.MOJANG
+            ) ?: _root_ide_package_.tech.guilhermekaua.nmsmcp.model.MappingNamespace.MOJANG
             val snippetsEnabled = environment["NMS_MCP_ENABLE_SNIPPETS"]
                 ?.trim()
                 ?.lowercase()

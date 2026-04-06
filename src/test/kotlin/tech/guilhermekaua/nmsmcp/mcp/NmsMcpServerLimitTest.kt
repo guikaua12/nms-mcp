@@ -1,4 +1,4 @@
-package dev.guilherme.nmsmcp.mcp
+package tech.guilhermekaua.nmsmcp.mcp
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

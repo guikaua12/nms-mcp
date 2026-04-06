@@ -1,11 +1,11 @@
-package dev.guilherme.nmsmcp.index
+package tech.guilhermekaua.nmsmcp.index
 
-import dev.guilherme.nmsmcp.config.AppConfig
-import dev.guilherme.nmsmcp.model.IndexedSymbol
-import dev.guilherme.nmsmcp.model.MappingNamespace
-import dev.guilherme.nmsmcp.model.SymbolAlias
-import dev.guilherme.nmsmcp.model.SymbolKind
-import dev.guilherme.nmsmcp.model.VersionIndex
+import tech.guilhermekaua.nmsmcp.config.AppConfig
+import tech.guilhermekaua.nmsmcp.model.IndexedSymbol
+import tech.guilhermekaua.nmsmcp.model.MappingNamespace
+import tech.guilhermekaua.nmsmcp.model.SymbolAlias
+import tech.guilhermekaua.nmsmcp.model.SymbolKind
+import tech.guilhermekaua.nmsmcp.model.VersionIndex
 import me.kcra.takenaka.core.Version
 import me.kcra.takenaka.core.mapping.resolve.impl.interfaces
 import me.kcra.takenaka.core.mapping.resolve.impl.modifiers

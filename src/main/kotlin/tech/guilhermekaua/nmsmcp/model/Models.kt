@@ -1,4 +1,4 @@
-package dev.guilherme.nmsmcp.model
+package tech.guilhermekaua.nmsmcp.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.time.Instant

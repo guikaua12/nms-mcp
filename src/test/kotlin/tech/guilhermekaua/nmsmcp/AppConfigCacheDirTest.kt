@@ -1,6 +1,6 @@
-package dev.guilherme.nmsmcp
+package tech.guilhermekaua.nmsmcp
 
-import dev.guilherme.nmsmcp.config.AppConfig
+import tech.guilhermekaua.nmsmcp.config.AppConfig
 import kotlin.io.path.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals

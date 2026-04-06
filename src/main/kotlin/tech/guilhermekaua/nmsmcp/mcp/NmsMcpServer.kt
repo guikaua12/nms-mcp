@@ -1,11 +1,11 @@
-package dev.guilherme.nmsmcp.mcp
+package tech.guilhermekaua.nmsmcp.mcp
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import dev.guilherme.nmsmcp.config.AppConfig
-import dev.guilherme.nmsmcp.model.MappingNamespace
-import dev.guilherme.nmsmcp.model.SymbolKind
-import dev.guilherme.nmsmcp.service.Renderers
-import dev.guilherme.nmsmcp.service.SymbolService
+import tech.guilhermekaua.nmsmcp.config.AppConfig
+import tech.guilhermekaua.nmsmcp.model.MappingNamespace
+import tech.guilhermekaua.nmsmcp.model.SymbolKind
+import tech.guilhermekaua.nmsmcp.service.Renderers
+import tech.guilhermekaua.nmsmcp.service.SymbolService
 import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper
 import io.modelcontextprotocol.server.McpServer
 import io.modelcontextprotocol.server.McpServerFeatures
@@ -75,7 +75,7 @@ class NmsMcpServer(
 
                 val hits = runBlocking {
                     service.search(
-                        dev.guilherme.nmsmcp.model.SearchQuery(
+                        tech.guilhermekaua.nmsmcp.model.SearchQuery(
                             query = query,
                             version = version,
                             kind = kind,
@@ -398,7 +398,7 @@ class NmsMcpServer(
                     .take(20)
                 "binaryName" -> runBlocking {
                     service.search(
-                        dev.guilherme.nmsmcp.model.SearchQuery(
+                        tech.guilhermekaua.nmsmcp.model.SearchQuery(
                             query = partial,
                             version = null,
                             kind = SymbolKind.CLASS,
@@ -430,7 +430,7 @@ class NmsMcpServer(
                 "kind" -> listOf("method", "field").filter { it.startsWith(partial) }
                 "ownerBinaryName" -> runBlocking {
                     service.search(
-                        dev.guilherme.nmsmcp.model.SearchQuery(
+                        tech.guilhermekaua.nmsmcp.model.SearchQuery(
                             query = partial,
                             version = null,
                             kind = SymbolKind.CLASS,
@@ -448,7 +448,7 @@ class NmsMcpServer(
             )
         }
 
-    private fun hitToMap(hit: dev.guilherme.nmsmcp.model.SearchHit): Map<String, Any?> =
+    private fun hitToMap(hit: tech.guilhermekaua.nmsmcp.model.SearchHit): Map<String, Any?> =
         linkedMapOf(
             "score" to hit.score,
             "reason" to hit.reason,
@@ -457,7 +457,7 @@ class NmsMcpServer(
             "symbol" to symbolToMap(hit.symbol)
         )
 
-    private fun symbolToMap(symbol: dev.guilherme.nmsmcp.model.IndexedSymbol): Map<String, Any?> =
+    private fun symbolToMap(symbol: tech.guilhermekaua.nmsmcp.model.IndexedSymbol): Map<String, Any?> =
         linkedMapOf(
             "symbolId" to symbol.symbolId,
             "versionId" to symbol.versionId,

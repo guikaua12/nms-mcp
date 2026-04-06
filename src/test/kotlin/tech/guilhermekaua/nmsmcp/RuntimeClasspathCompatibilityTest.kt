@@ -1,4 +1,4 @@
-package dev.guilherme.nmsmcp
+package tech.guilhermekaua.nmsmcp
 
 import kotlin.test.Test
 import kotlin.test.assertNotNull

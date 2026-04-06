@@ -1,7 +1,7 @@
-package dev.guilherme.nmsmcp.mappings
+package tech.guilhermekaua.nmsmcp.mappings
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import dev.guilherme.nmsmcp.config.AppConfig
+import tech.guilhermekaua.nmsmcp.config.AppConfig
 import me.kcra.takenaka.core.CompositeWorkspace
 import me.kcra.takenaka.core.Version
 import me.kcra.takenaka.core.VersionManifest

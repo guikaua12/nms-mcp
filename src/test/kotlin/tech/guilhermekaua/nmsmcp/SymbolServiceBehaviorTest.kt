@@ -1,13 +1,13 @@
-package dev.guilherme.nmsmcp
+package tech.guilhermekaua.nmsmcp
 
-import dev.guilherme.nmsmcp.config.AppConfig
-import dev.guilherme.nmsmcp.index.SqliteSymbolIndex
-import dev.guilherme.nmsmcp.index.SymbolIndexBuilder
-import dev.guilherme.nmsmcp.mappings.MappingSource
-import dev.guilherme.nmsmcp.mappings.defaultObjectMapper
-import dev.guilherme.nmsmcp.model.MappingNamespace
-import dev.guilherme.nmsmcp.service.SymbolService
-import dev.guilherme.nmsmcp.snippets.SnippetService
+import tech.guilhermekaua.nmsmcp.config.AppConfig
+import tech.guilhermekaua.nmsmcp.index.SqliteSymbolIndex
+import tech.guilhermekaua.nmsmcp.index.SymbolIndexBuilder
+import tech.guilhermekaua.nmsmcp.mappings.MappingSource
+import tech.guilhermekaua.nmsmcp.mappings.defaultObjectMapper
+import tech.guilhermekaua.nmsmcp.model.MappingNamespace
+import tech.guilhermekaua.nmsmcp.service.SymbolService
+import tech.guilhermekaua.nmsmcp.snippets.SnippetService
 import kotlinx.coroutines.runBlocking
 import me.kcra.takenaka.core.Version
 import me.kcra.takenaka.core.VersionManifest

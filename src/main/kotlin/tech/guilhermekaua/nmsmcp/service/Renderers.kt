@@ -1,11 +1,11 @@
-package dev.guilherme.nmsmcp.service
+package tech.guilhermekaua.nmsmcp.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import dev.guilherme.nmsmcp.model.CompareResult
-import dev.guilherme.nmsmcp.model.IndexedSymbol
-import dev.guilherme.nmsmcp.model.SearchHit
-import dev.guilherme.nmsmcp.model.SnippetResult
-import dev.guilherme.nmsmcp.model.SymbolKind
+import tech.guilhermekaua.nmsmcp.model.CompareResult
+import tech.guilhermekaua.nmsmcp.model.IndexedSymbol
+import tech.guilhermekaua.nmsmcp.model.SearchHit
+import tech.guilhermekaua.nmsmcp.model.SnippetResult
+import tech.guilhermekaua.nmsmcp.model.SymbolKind
 
 class Renderers(private val objectMapper: ObjectMapper) {
     fun renderSearch(hits: List<SearchHit>, queriedVersion: String, actualVersion: String): String {
