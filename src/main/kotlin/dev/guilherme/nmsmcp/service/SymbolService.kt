@@ -170,11 +170,12 @@ class SymbolService(
     }
 
     suspend fun describe(symbolId: String): IndexedSymbol {
-        val versionId = symbolId.substringBefore('|')
+        val canonicalSymbolId = requireCanonicalSymbolId(symbolId)
+        val versionId = canonicalSymbolId.substringBefore('|')
         val version = resolveVersion(versionId)
         val versionIndex = ensureIndexed(version)
-        return requireNotNull(versionIndex.symbolsById[symbolId]) {
-            "Unknown symbol_id '$symbolId'"
+        return requireNotNull(versionIndex.symbolsById[canonicalSymbolId]) {
+            "Unknown symbol_id '$canonicalSymbolId'"
         }
     }
 
@@ -198,11 +199,11 @@ class SymbolService(
             resolved.hits.first().symbol
         }
 
-        val allowedNamespaces = fromSymbol.aliases.keys.intersect(
-            toIndex.symbolsById.values.flatMap { it.aliases.keys }.toSet()
-        ).ifEmpty {
-            setOf(config.primaryNamespace.wireName)
-        }.toList()
+        require(fromSymbol.versionId == fromVersion.id) {
+            "symbol_id '$symbolIdOrName' belongs to ${fromSymbol.versionId}, not $fromVersionId"
+        }
+
+        val allowedNamespaces = comparisonNamespaces(fromSymbol, fromTree, toTree)
 
         val classTree = classAncestryTreeOf<MappingTree, MappingTree.ClassMapping>(
             mappings = linkedMapOf(fromVersion to fromTree, toVersion to toTree),
@@ -355,6 +356,39 @@ class SymbolService(
         return requireNotNull(manifest[requested]) {
             "Unknown Minecraft version '$requested'"
         }
+    }
+
+    private fun requireCanonicalSymbolId(symbolId: String): String {
+        val normalized = symbolId.trim()
+        require(normalized.isNotEmpty()) { "symbol_id must not be blank" }
+        require(normalized.count { it == '|' } >= 2) {
+            "symbol_id must be a canonical server-returned identifier such as '<version>|class|...'"
+        }
+        return normalized
+    }
+
+    private fun comparisonNamespaces(fromSymbol: IndexedSymbol, fromTree: MappingTree, toTree: MappingTree): List<String> {
+        val sharedDestinationNamespaces = fromTree.dstNamespaces.intersect(toTree.dstNamespaces.toSet())
+        val preferredNamespaces = fromSymbol.aliases.keys.asSequence()
+            .filter { it != MappingNamespace.SOURCE.wireName }
+            .filter(sharedDestinationNamespaces::contains)
+            .toList()
+
+        if (preferredNamespaces.isNotEmpty()) {
+            return preferredNamespaces
+        }
+
+        val fallbackNamespaces = buildList {
+            if (config.primaryNamespace != MappingNamespace.SOURCE && sharedDestinationNamespaces.contains(config.primaryNamespace.wireName)) {
+                add(config.primaryNamespace.wireName)
+            }
+            addAll(sharedDestinationNamespaces)
+        }.distinct()
+
+        require(fallbackNamespaces.isNotEmpty()) {
+            "Could not find a comparable destination namespace shared by ${fromTree.srcNamespace} mappings in ${fromSymbol.versionId}"
+        }
+        return fallbackNamespaces
     }
 
     private fun computeScore(
